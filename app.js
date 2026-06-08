@@ -20,6 +20,15 @@ const User = require('./models/user');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use((req, res, next) => {
+    User.findByPk(1)
+        .then(user => {
+            req.user = user; // Attaching the user to the request object
+            next();
+        })
+        .catch(err => console.log(err));
+});
+
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 
@@ -35,10 +44,20 @@ Product.belongsTo(User, {
 User.hasMany(Product);
 
 // Sync all defined models to the database
-sequelize.sync({ force: true })
+sequelize.sync()
     .then(result => {
+        return User.findByPk(1)
         // console.log(result); // Returns a complex setup metadata object
-        app.listen(3000);    // Only start the server if the DB sync succeeds
+    })
+    .then(user => {
+        if (!user) {
+            return User.create({ name: "max", email: "test@gmail.com" })
+        }
+        return user;
+    })
+    .then(user => {
+        console.log(user);
+        app.listen(3000);
     })
     .catch(err => {
         console.log(err);
