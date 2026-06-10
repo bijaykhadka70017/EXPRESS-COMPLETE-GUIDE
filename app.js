@@ -17,6 +17,9 @@ const Product = require('./models/product');
 const User = require('./models/user');
 const Cart = require('./models/cart');
 const CartItem = require('./models/cart-item');
+const Order = require('./models/order');
+const OrderItem = require('./models/order-item');
+
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -51,8 +54,13 @@ Cart.belongsTo(User);
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
 
+Order.belongsTo(User);
+User.hasMany(Order);
+Order.belongsToMany(Product, { through: OrderItem });
+
 // Sync all defined models to the database
-sequelize.sync({ force: true })
+// sequelize.sync({ force: true })
+sequelize.sync()
     .then(result => {
         return User.findByPk(1)
         // console.log(result); // Returns a complex setup metadata object
@@ -64,7 +72,9 @@ sequelize.sync({ force: true })
         return user;
     })
     .then(user => {
-        console.log(user);
+        return user.createCart();
+    })
+    .then(cart => {
         app.listen(3000);
     })
     .catch(err => {
